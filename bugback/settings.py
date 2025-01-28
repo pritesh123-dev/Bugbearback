@@ -65,9 +65,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -239,6 +239,9 @@ CORS_ALLOWED_ORIGINS = [
     "https://bugbearfrontend-k6wj3j3fq-aekutetechnologies-projects.vercel.app",
     "https://bugback-production-2362.up.railway.app",
 ]
+
+CORS_ALLOW_HEADERS = ['*']
+CORS_ORIGIN_ALLOW_ALL = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
