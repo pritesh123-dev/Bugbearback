@@ -234,6 +234,11 @@ if (
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://bugbearfrontend.vercel.app",
+    "https://bugbearfrontend-git-main-aekutetechnologies-projects.vercel.app",
+    "https://bugbearfrontend-k6wj3j3fq-aekutetechnologies-projects.vercel.app",
+
+
 ]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
