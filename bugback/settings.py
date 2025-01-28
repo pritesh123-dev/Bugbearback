@@ -142,6 +142,7 @@ WSGI_APPLICATION = "bugback.wsgi.application"
 #     }
 # }
 
+# DB
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
