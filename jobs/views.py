@@ -395,7 +395,7 @@ class JobSearchView(APIView):
                     "salary_max": float(job.salary_max),
                     "experience": str(job.experience).lower(),
                     "job_type": job.job_type.lower(),
-                    "job_created": job.job_created,
+                    "job_created": job.job_posted,
                     "company": job.company.name if job.company else "",
                     "responsibilities": job.responsibilities,
                     "skills": job.skills,
