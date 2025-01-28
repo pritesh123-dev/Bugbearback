@@ -87,6 +87,7 @@ requests-oauthlib==2.0.0
 rich==13.7.1
 rpds-py==0.18.1
 scipy==1.13.1
+setuptools
 simplejson==3.19.3
 six==1.16.0
 smmap==5.0.1
