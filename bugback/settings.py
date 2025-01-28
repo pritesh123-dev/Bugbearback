@@ -256,6 +256,8 @@ SIMPLE_JWT = {
     "JTI_CLAIM": "jti",
 }
 
+STATICSTORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 CACHES = {
     "default": {
