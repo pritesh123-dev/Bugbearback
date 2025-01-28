@@ -35,7 +35,8 @@ ALLOWED_HOSTS = ["*", "bugbearback.onrender.com"]
 
 # WEB_URL = "https://bugbearback.onrender.com"
 # WEB_URL = "http://35.154.204.105"
-WEB_URL = "https://bugbear.in"
+# WEB_URL = "https://bugbear.in"
+WEB_URL = "https://bugback-production-2362.up.railway.app"
 # Application definition
 
 INSTALLED_APPS = [

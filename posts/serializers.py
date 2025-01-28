@@ -49,8 +49,9 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_post_image_url(self, obj):
         if obj.image:
-            return "https://bugbear.in" + str(obj.image.url)
+            # return "https://bugbear.in" + str(obj.image.url)
             # return "http://localhost:8000" + str(obj.image.url)
+            return "https://bugback-production-2362.up.railway.app" + str(obj.image.url)
         return None
 
     def get_total_comments(self, obj):

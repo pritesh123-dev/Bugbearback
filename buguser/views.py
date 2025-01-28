@@ -336,7 +336,9 @@ class SendPasswordResetEmailView(APIView):
         uid = urlsafe_base64_encode(force_bytes(user.pk))
 
         # Generate password reset link
-        reset_link = f"https://bugbear.in/reset-password?uid={uid}&token={token}"
+        # reset_link = f"https://bugbear.in/reset-password?uid={uid}&token={token}"
+
+        reset_link = f"https://bugback-production-2362.up.railway.app/reset-password?uid={uid}&token={token}"
 
 
         # Prepare email content
