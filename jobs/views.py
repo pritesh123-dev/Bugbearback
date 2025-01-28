@@ -396,12 +396,6 @@ class JobSearchView(APIView):
                     "experience": str(job.experience).lower(),
                     "job_type": job.job_type.lower(),
                     "job_created": job.job_posted,
-                    "company": job.company.name if job.company else "",
-                    "responsibilities": job.responsibilities,
-                    "skills": job.skills,
-                    "qualifications": job.qualifications,
-                    "location": job.location,
-                    "education": job.education,
                     "featured": job.featured,
                     "is_active": job.is_active,
                 }
