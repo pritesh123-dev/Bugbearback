@@ -237,8 +237,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://bugbearfrontend.vercel.app",
     "https://bugbearfrontend-git-main-aekutetechnologies-projects.vercel.app",
     "https://bugbearfrontend-k6wj3j3fq-aekutetechnologies-projects.vercel.app",
-
-
+    "https://bugback-production-2362.up.railway.app",
 ]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

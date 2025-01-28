@@ -305,52 +305,118 @@ class JobSearchView(APIView):
         },
     )
     def post(self, request, format=None):
-        # Extract filter parameters
         search_query = request.data.get("title", "").lower()
         categories = request.data.get("category", [])
         salary_ranges = request.data.get("salaryRange", [])
         experience_levels = request.data.get("experienceLevel", [])
         job_types = request.data.get("jobType", [])
 
-        # Fetch data from Redis
-        redis_client = cache.client.get_client()
-        job_keys = redis_client.keys("job:*")
+        # Try fetching from Redis, fallback to DB on exception
+        try:
+            redis_client = cache.client.get_client()
+            job_keys = redis_client.keys("job:*")
 
-        pipeline = redis_client.pipeline()
-        for job_key in job_keys:
-            pipeline.get(job_key)
-        job_data_list = pipeline.execute()
+            pipeline = redis_client.pipeline()
+            for job_key in job_keys:
+                pipeline.get(job_key)
+            job_data_list = pipeline.execute()
 
-        # Filter jobs
-        matching_jobs = []
-        for job_data in job_data_list:
-            job_data = json.loads(job_data.decode("utf-8"))
-            job_title = job_data.get("title", "").lower()
-            job_category = job_data.get("category", "").lower()
-            job_salary_min = float(job_data.get("salary_min", 0))
-            job_salary_max = float(job_data.get("salary_max", 0))
-            job_experience = job_data.get("experience", "").lower()
-            job_type_data = job_data.get("job_type", "").lower()
+            matching_jobs = []
+            for job_data in job_data_list:
+                job_data = json.loads(job_data.decode("utf-8"))
+                job_title = job_data.get("title", "").lower()
+                job_category = job_data.get("category", "").lower()
+                job_salary_min = float(job_data.get("salary_min", 0))
+                job_salary_max = float(job_data.get("salary_max", 0))
+                job_experience = job_data.get("experience", "").lower()
+                job_type_data = job_data.get("job_type", "").lower()
 
-            # Salary filtering logic
-            valid_salary = any(
-                float(sr.split("-")[0]) <= job_salary_min <= float(sr.split("-")[1])
-                for sr in salary_ranges if "-" in sr
-            )
+                valid_salary = any(
+                    float(sr.split("-")[0]) <= job_salary_min <= float(sr.split("-")[1])
+                    for sr in salary_ranges if "-" in sr
+                )
 
-            if (
-                (not search_query or search_query in job_title)
-                and (not categories or job_category in [cat.lower() for cat in categories])
-                and (not salary_ranges or valid_salary)
-                and (not experience_levels or any(exp.lower() in job_experience for exp in experience_levels))
-                and (not job_types or job_type_data in [jt.lower() for jt in job_types])
-            ):
-                matching_jobs.append(job_data)
+                if (
+                    (not search_query or search_query in job_title)
+                    and (not categories or job_category in [cat.lower() for cat in categories])
+                    and (not salary_ranges or valid_salary)
+                    and (not experience_levels or any(exp.lower() in job_experience for exp in experience_levels))
+                    and (not job_types or job_type_data in [jt.lower() for jt in job_types])
+                ):
+                    matching_jobs.append(job_data)
 
-        # Sort by creation date
-        matching_jobs.sort(key=lambda x: x.get("job_created"), reverse=True)
+            matching_jobs.sort(key=lambda x: x.get("job_created"), reverse=True)
 
-        # Apply pagination
+        except Exception as e:
+            # Fallback to database
+            queryset = BugJob.objects.all().select_related('category', 'company')
+
+            # Apply title filter
+            if search_query:
+                queryset = queryset.filter(title__icontains=search_query)
+
+            # Apply category filter
+            if categories:
+                category_filter = Q()
+                for cat in categories:
+                    category_filter |= Q(category__name__iexact=cat.strip().lower())
+                queryset = queryset.filter(category_filter)
+
+            # Apply salary range filter
+            if salary_ranges:
+                salary_filter = Q()
+                for sr in salary_ranges:
+                    if '-' in sr:
+                        parts = sr.split('-')
+                        if len(parts) == 2:
+                            try:
+                                sr_min = float(parts[0])
+                                sr_max = float(parts[1])
+                                salary_filter |= Q(salary_min__gte=sr_min, salary_min__lte=sr_max)
+                            except ValueError:
+                                pass
+                queryset = queryset.filter(salary_filter)
+
+            # Apply job type filter
+            if job_types:
+                job_type_filter = Q()
+                for jt in job_types:
+                    job_type_filter |= Q(job_type__iexact=jt.strip().lower())
+                queryset = queryset.filter(job_type_filter)
+
+            # Prepare job data to match Redis structure
+            jobs_list = []
+            for job in queryset:
+                job_data = {
+                    "id": job.id,
+                    "title": job.title.lower(),
+                    "category": job.category.name.lower() if job.category else "",
+                    "salary_min": float(job.salary_min),
+                    "salary_max": float(job.salary_max),
+                    "experience": str(job.experience).lower(),
+                    "job_type": job.job_type.lower(),
+                    "job_created": job.job_created,
+                    "company": job.company.name if job.company else "",
+                    "responsibilities": job.responsibilities,
+                    "skills": job.skills,
+                    "qualifications": job.qualifications,
+                    "location": job.location,
+                    "education": job.education,
+                    "featured": job.featured,
+                    "is_active": job.is_active,
+                }
+                jobs_list.append(job_data)
+
+            # Apply experience filter
+            if experience_levels:
+                exp_levels_lower = [exp.lower() for exp in experience_levels]
+                jobs_list = [job for job in jobs_list if any(exp in job["experience"] for exp in exp_levels_lower)]
+
+            # Sort by job_created
+            jobs_list.sort(key=lambda x: x.get("job_created"), reverse=True)
+            matching_jobs = jobs_list
+
+        # Pagination
         paginator = Paginator(matching_jobs, request.data.get("page_size", 10))
         page_number = request.data.get("page", 1)
 
@@ -359,7 +425,6 @@ class JobSearchView(APIView):
         except Exception:
             return Response({"error": "Invalid page number"}, status=400)
 
-        # Build paginated response
         response_data = {
             "count": paginator.count,
             "next": paginated_jobs.has_next() and f"?page={paginated_jobs.next_page_number()}" or None,
@@ -368,7 +433,6 @@ class JobSearchView(APIView):
         }
 
         return Response(response_data)
-
 
 
 class JobDetailView(APIView):
